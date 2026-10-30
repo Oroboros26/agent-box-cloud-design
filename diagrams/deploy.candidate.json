@@ -1,0 +1,33 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": { "title": "How to Deploy Agent Box as a Service (proposed)", "output": "w/agent-box-deploy.html", "quality_profile": "showcase" },
+  "lanes": [
+    { "id": "you", "label": "You" },
+    { "id": "ci", "label": "Build" },
+    { "id": "infra", "label": "Hetzner" },
+    { "id": "user", "label": "New user" }
+  ],
+  "mainPath": ["mvp", "image", "control", "deploy", "installer", "boxup"],
+  "nodes": [
+    { "id": "mvp", "lane": "you", "col": 0, "type": "frontend", "label": "Phase 0 + MVP", "sublabel": "manual proof, box CLI", "tag": "go / no-go" },
+    { "id": "image", "lane": "ci", "col": 1, "type": "backend", "label": "Bake image", "sublabel": "tools preinstalled" },
+    { "id": "control", "lane": "ci", "col": 2, "type": "backend", "label": "Control plane", "sublabel": "API + database" },
+    { "id": "deploy", "lane": "infra", "col": 3, "type": "cloud", "label": "Deploy", "sublabel": "API, DB, warm pool" },
+    { "id": "installer", "lane": "ci", "col": 4, "type": "backend", "label": "Publish installer", "sublabel": "curl | sh + CLI" },
+    { "id": "boxup", "lane": "user", "col": 5, "type": "external", "label": "box login + up", "sublabel": "ready < 5 min", "tag": "goal" },
+    { "id": "sleep", "lane": "infra", "col": 5, "type": "messagebus", "label": "Auto-sleep", "sublabel": "idle snapshot" }
+  ],
+  "edges": [
+    { "from": "mvp", "to": "image", "label": "timings", "variant": "emphasis" },
+    { "from": "image", "to": "control" },
+    { "from": "control", "to": "deploy", "variant": "emphasis" },
+    { "from": "deploy", "to": "installer" },
+    { "from": "installer", "to": "boxup", "variant": "emphasis" },
+    { "from": "boxup", "to": "sleep", "label": "idle", "variant": "dashed", "route": "drop", "fromSide": "top", "toSide": "bottom" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Order matters", "items": ["Phase 0 must pass before anything is built", "Image baking is the lever for the 5-minute goal", "Installer ships only after the control plane is live"] },
+    { "dot": "rose", "title": "Proposed, not decided", "items": ["Hosting choice for the control plane is open", "Auth, billing and tenant isolation are Phase 2 work", "Steps follow the Phase 2 roadmap in the spec"] }
+  ]
+}

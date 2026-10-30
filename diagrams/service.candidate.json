@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": { "title": "Agent Box as a Service (target design)", "output": "a/agent-box-service.html", "quality_profile": "showcase" },
+  "components": [
+    { "id": "user", "type": "external", "label": "Developer", "sublabel": "laptop / WSL2", "pos": [40, 200], "size": [120, 60] },
+    { "id": "cli", "type": "frontend", "label": "box CLI", "sublabel": "one-line installer", "pos": [240, 200], "size": [120, 60] },
+    { "id": "api", "type": "backend", "label": "Control Plane API", "sublabel": "users, boxes, usage", "pos": [440, 200], "size": [120, 60] },
+    { "id": "billing", "type": "external", "label": "Billing", "sublabel": "credits, metering", "pos": [440, 40], "size": [120, 60] },
+    { "id": "db", "type": "database", "label": "Database", "sublabel": "users, boxes, usage", "pos": [440, 360], "size": [120, 60] },
+    { "id": "prov", "type": "backend", "label": "Provisioner", "sublabel": "create, sleep, wake", "pos": [640, 200], "size": [120, 60] },
+    { "id": "idle", "type": "backend", "label": "Idle Watcher", "sublabel": "auto-sleep", "pos": [640, 40], "size": [120, 60] },
+    { "id": "pool", "type": "cloud", "label": "Pre-baked Image", "sublabel": "+ warm pool", "pos": [640, 360], "size": [120, 60], "tag": "speed" },
+    { "id": "hcloud", "type": "cloud", "label": "Hetzner API", "sublabel": "servers, snapshots", "pos": [840, 200], "size": [120, 60] },
+    { "id": "box", "type": "cloud", "label": "User Box VM", "sublabel": "tmux + agent", "pos": [1040, 200], "size": [120, 60], "tag": "SSH :22 only" }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Hetzner Cloud", "wraps": ["hcloud", "box"] }
+  ],
+  "connections": [
+    { "id": "install", "from": "user", "to": "cli", "label": "install", "variant": "emphasis" },
+    { "id": "login", "from": "cli", "to": "api", "label": "login", "variant": "security" },
+    { "id": "api-prov", "from": "api", "to": "prov", "label": "jobs" },
+    { "id": "api-db", "from": "api", "to": "db", "label": "SQL", "fromSide": "bottom", "toSide": "top" },
+    { "id": "api-billing", "from": "api", "to": "billing", "label": "usage", "variant": "dashed", "fromSide": "top", "toSide": "bottom" },
+    { "id": "idle-prov", "from": "idle", "to": "prov", "label": "sleep", "variant": "dashed", "fromSide": "bottom", "toSide": "top" },
+    { "id": "pool-prov", "from": "pool", "to": "prov", "label": "image", "fromSide": "top", "toSide": "bottom" },
+    { "id": "prov-hcloud", "from": "prov", "to": "hcloud", "label": "API calls" },
+    { "id": "hcloud-box", "from": "hcloud", "to": "box", "label": "creates", "variant": "emphasis" },
+    { "id": "ssh", "from": "cli", "to": "box", "label": "SSH + Mutagen sync + port tunnels", "variant": "emphasis", "fromSide": "bottom", "toSide": "bottom", "via": [[300, 480], [1100, 480]] }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Control plane", "items": ["API owns users, boxes and usage", "Provisioner is the only component holding the provider token", "Idle watcher triggers auto-sleep"] },
+    { "dot": "emerald", "title": "Data path", "items": ["Your files and agent never pass through the control plane", "CLI talks to the box directly over SSH", "App ports reached by SSH tunnel, never public"] },
+    { "dot": "rose", "title": "Status", "items": ["Phase 2 target design, not built", "MVP is the CLI plus Hetzner only (see PLAN.md)", "Multi-tenant isolation is the largest open risk"] }
+  ]
+}
